@@ -17,7 +17,7 @@ export function ZetaChainProvider({ children }: ZetaChainProviderProps) {
             api: [
               {
                 // url: `https://zetachain-testnet-archive.allthatnode.com:8545/${process.env.NEXT_PUBLIC_ATN_KEY}`,
-                url: 'https://zetachain-testnet.blastapi.io/61da4f21-2ac9-4efa-9a38-049d9ac1c017™',
+                url: 'https://zetachain-testnet.blastapi.io/61da4f21-2ac9-4efa-9a38-049d9ac1c017',
                 type: "evm",
               },
             ],

@@ -38,6 +38,62 @@ import {
 } from "@/components/ui/select"
 import { AppContext } from "@/app/index"
 
+// Spinner component using Tailwind CSS
+const Spinner = () => (
+  <svg
+    className="animate-spin h-5 w-5 text-white"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    ></circle>
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    ></path>
+  </svg>
+);
+
+// @ts-ignore
+const LoadingButton = ({ isLoading, children }) => (
+  <button
+    className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+      isLoading ? 'cursor-not-allowed' : ''
+    }`}
+    type="submit"
+    disabled={isLoading}
+  >
+    {isLoading ? <Spinner /> : children}
+  </button>
+);
+
+import { InvoiceManager__factory } from "@/typechain-types"
+
+import { InvoiceManager } from "@/typechain-types/contracts/InvoiceManager"
+import { Skeleton } from "@/components/ui/skeleton"
+
+type InvoiceStruct = InvoiceManager.InvoiceStruct
+
+const LoadingSkeleton = () => {
+  return (
+    <div className="space-y-4">
+      {Array(3)
+        .fill(null)
+        .map((_, index) => (
+          <Skeleton key={index} className="h-10 w-full" />
+        ))}
+    </div>
+  )
+}
+
 const contracts: any = {
   goerli_testnet: "0x122F9Cca5121F23b74333D5FBd0c5D9B413bc002",
   mumbai_testnet: "0x392bBEC0537D48640306D36525C64442E98FA780",
@@ -45,189 +101,51 @@ const contracts: any = {
 }
 
 const MessagingPage = () => {
-  const [message, setMessage] = useState("")
-  const [destinationNetwork, setDestinationNetwork] = useState("")
-  const [destinationChainID, setDestinationChainID] = useState(null)
-  const [isZeta, setIsZeta] = useState(false)
-  const [currentNetworkName, setCurrentNetworkName] = useState<any>("")
-  const [completed, setCompleted] = useState(false)
-  const [fee, setFee] = useState("")
-  const [currentChain, setCurrentChain] = useState<any>()
-
-  const [debouncedMessage] = useDebounce(message, 500)
-
-  const allNetworks = Object.keys(contracts)
   const signer = useEthersSigner()
 
-  const { chain } = useNetwork()
-  useEffect(() => {
-    setCurrentNetworkName(chain ? getNetworkName(chain.network) : undefined)
-    if (chain) {
-      setCurrentChain(chain)
-      setIsZeta(getNetworkName(chain.network) === "zeta_testnet")
-    }
-  }, [chain])
+  const contract = InvoiceManager__factory.connect("0xF414178A366c5f7bd8C2d0666cd34df3B245AD42", signer);
+
+  const [invoices, setInvoices] = useState<InvoiceStruct[]>([])
+  const [invoicesLoading, setInvoicesLoading] = useState(true);
+  const [isFormDisabled, setFormDisabled] = useState(false);
 
   useEffect(() => {
-    setDestinationChainID(
-      (networks as any)[destinationNetwork]?.chain_id ?? null
-    )
-  }, [destinationNetwork])
-  const { inbounds, setInbounds, fees } = useContext(AppContext)
-
-  const {
-    config,
-    error: prepareError,
-    isError: isPrepareError,
-  } = usePrepareContractWrite({
-    address: contracts[currentNetworkName || ""],
-    abi: [
-      {
-        inputs: [
-          {
-            internalType: "uint256",
-            name: "destinationChainId",
-            type: "uint256",
-          },
-          {
-            internalType: "string",
-            name: "message",
-            type: "string",
-          },
-        ],
-        name: "sendMessage",
-        outputs: [],
-        stateMutability: "payable",
-        type: "function",
-      },
-    ],
-    value: BigInt(parseFloat(fee) * 1e18 || 0),
-    functionName: "sendMessage",
-    args: [
-      BigInt(destinationChainID !== null ? destinationChainID : 0),
-      debouncedMessage,
-    ],
-  })
-
-  const { data, write } = useContractWrite(config)
-
-  const { isLoading, isSuccess } = useWaitForTransaction({
-    hash: data?.hash,
-  })
-
-  const convertZETAtoMATIC = async (amount: string) => {
-    const quoterContract = new ethers.Contract(
-      "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
-      Quoter.abi,
-      signer
-    )
-    const quotedAmountOut =
-      await quoterContract.callStatic.quoteExactInputSingle(
-        "0x0000c9ec4042283e8139c74f4c64bcd1e0b9b54f", // WZETA
-        "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889", // WMATIC
-        500,
-        parseEther(amount),
-        0
-      )
-    return quotedAmountOut
-  }
-
-  const getCCMFee = useCallback(async () => {
-    try {
-      if (!currentNetworkName || !destinationNetwork) {
-        throw new Error("Network is not selected")
+    (async () => {
+      if (!signer) {
+        return
       }
-      const feeZETA = fees.feesCCM[destinationNetwork].totalFee
-      let fee
-      if (currentNetworkName === "mumbai_testnet") {
-        fee = await convertZETAtoMATIC(feeZETA)
-      } else {
-        const rpc = getEndpoints("evm", currentNetworkName)[0]?.url
-        const provider = new ethers.providers.JsonRpcProvider(rpc)
-        const routerAddress = getNonZetaAddress(
-          "uniswapV2Router02",
-          currentNetworkName
-        )
-        const router = new ethers.Contract(
-          routerAddress,
-          UniswapV2Factory.abi,
-          provider
-        )
-        const amountIn = ethers.utils.parseEther(feeZETA)
-        const zetaToken = getAddress("zetaToken", currentNetworkName)
-        const weth = getNonZetaAddress("weth9", currentNetworkName)
-        let zetaOut = await router.getAmountsOut(amountIn, [zetaToken, weth])
-        fee = zetaOut[1]
-      }
-      fee = Math.ceil(parseFloat(formatEther(fee)) * 1.01 * 100) / 100 // 1.01 is to ensure that the fee is enough
-      setFee(fee.toString())
-    } catch (error) {
-      console.error(error)
-    }
-  }, [currentNetworkName, destinationNetwork])
-
-  useEffect(() => {
-    try {
-      getCCMFee()
-    } catch (error) {
-      console.error(error)
-    }
-  }, [currentNetworkName, destinationNetwork, signer])
-
-  const explorer =
-    destinationNetwork &&
-    getExplorers(
-      contracts[destinationNetwork],
-      "address",
-      destinationNetwork
-    )[0]
-
-  useEffect(() => {
-    if (isSuccess && data) {
-      const inbound = {
-        inboundHash: data.hash,
-        desc: `Message sent to ${destinationNetwork}`,
-      }
-      setCompleted(true)
-      setInbounds([inbound, ...inbounds])
-    }
-  }, [isSuccess, data])
-
-  useEffect(() => {
-    setCompleted(false)
-  }, [destinationNetwork, message])
-
-  const availableNetworks = allNetworks.filter(
-    (network) => network !== currentNetworkName
-  )
-
-  function extractDomain(url: string): string | null {
-    try {
-      const parsedURL = new URL(url)
-      const parts = parsedURL.hostname.split(".")
-      if (parts.length < 2) {
-        return null
-      }
-      return parts[parts.length - 2]
-    } catch (error) {
-      console.error("Invalid URL provided:", error)
-      return null
-    }
-  }
+      console.log("getting invoices")
+      const invoices = await contract.getMyInvoices()
+      console.log("got invoice result");
+      setInvoicesLoading(false);
+      console.log(invoices)
+      setInvoices(invoices);
+    })()
+  }, [signer])
+  
 
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
+    
     console.log({ amount, description });
-    alert('Invoice Created');
+    try {
+      setFormDisabled(true);
+      const invoiceTransaction = await contract.createInvoice(description, amount);
+      setFormDisabled(false);
+      console.log(`invoice created: ${invoiceTransaction}`)
+    } catch(e: any) {
+      setFormDisabled(false);
+      throw e;
+    }
   };
 
   return (
     <div>
       <h1 className="text-2xl font-bold leading-tight tracking-tight mt-6 mb-4">
-        Receive Payment
+        New Invoice
       </h1>
       <p className="mb-6 text-gray-700">
         Create an invoice for a payment. Your invoice will be stored on ZetaChain. You will receive a link to share with the payer.
@@ -258,13 +176,38 @@ const MessagingPage = () => {
             required
           />
         </div>
-        <button
-          type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        <LoadingButton
+          isLoading={isFormDisabled}
         >
           Create Invoice
-        </button>
+        </LoadingButton>
       </form>
+      <h1 className="text-2xl font-bold leading-tight tracking-tight mt-6 mb-4">
+        Invoices
+      </h1>
+      { invoicesLoading ? LoadingSkeleton() : 
+      invoices.length == 0 ? <p>You have no invoices</p> :
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Link</th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (USD)</th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {invoices.map((invoice, index) => (
+            <tr key={index}>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><Link href={`/send?id=${invoice.id.toNumber()}`}>↗</Link></td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.paid.toString()}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.priceUSD.toNumber()}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+}
     </div>
   )
 }
