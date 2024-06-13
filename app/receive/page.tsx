@@ -123,6 +123,20 @@ const MessagingPage = () => {
       setInvoices(invoices);
     })()
   }, [signer])
+
+  const { chain } = useNetwork()
+  const [isZeta, setIsZeta] = useState(false)
+  const [currentNetworkName, setCurrentNetworkName] = useState<any>("")
+  const [currentChain, setCurrentChain] = useState<any>()
+  useEffect(() => {
+    setCurrentNetworkName(chain ? getNetworkName(chain.network) : undefined)
+    if (chain) {
+      setCurrentChain(chain)
+      const networkNameRaw = getNetworkName(chain.network);
+      const networkName = networkNameRaw ? networkNameRaw : "";
+      setIsZeta(networkName.includes("zeta"));
+    }
+  }, [chain])
   
 
   const [amount, setAmount] = useState('');
@@ -142,6 +156,12 @@ const MessagingPage = () => {
       throw e;
     }
   };
+
+  if (chain && !isZeta) {
+    return (
+      <p>You need to switch your wallet to ZetaChain to work with invoices</p>
+    )
+  }
 
   return (
     <div>
