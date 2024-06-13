@@ -218,7 +218,7 @@ const MessagingPage = () => {
   return (
     <div className="px-4">
       <h1 className="text-2xl font-bold leading-tight tracking-tight mt-6 mb-4">
-        Cross-Chain Message
+        Receive Payment!
       </h1>
       <div className="grid grid-cols-1 sm:grid-cols-6 gap-10 items-start">
         <div className="col-span-1 sm:col-span-2">

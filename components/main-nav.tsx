@@ -54,6 +54,18 @@ export function MainNav() {
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
+            <Link href="/receive" legacyBehavior passHref>
+              <NavigationMenuLink
+                className={cn(
+                  navigationMenuTriggerStyle(),
+                  pathname === "/" ? "bg-accent" : ""
+                )}
+              >
+                Receive
+              </NavigationMenuLink>
+            </Link>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
