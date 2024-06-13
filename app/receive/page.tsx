@@ -103,6 +103,7 @@ const contracts: any = {
 const MessagingPage = () => {
   const signer = useEthersSigner()
 
+  // @ts-ignore
   const contract = InvoiceManager__factory.connect("0xF414178A366c5f7bd8C2d0666cd34df3B245AD42", signer);
 
   const [invoices, setInvoices] = useState<InvoiceStruct[]>([])
@@ -199,7 +200,7 @@ const MessagingPage = () => {
         <tbody className="bg-white divide-y divide-gray-200">
           {invoices.map((invoice, index) => (
             <tr key={index}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><Link href={`/send?id=${invoice.id.toNumber()}`}>↗</Link></td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><Link href={`/send?id=${invoice.id}`}>↗</Link></td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.paid.toString()}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.priceUSD.toNumber()}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.description}</td>
