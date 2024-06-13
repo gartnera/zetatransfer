@@ -202,7 +202,10 @@ const MessagingPage = () => {
             <tr key={index}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><Link href={`/send?id=${invoice.id}`}>↗</Link></td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.paid.toString()}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.priceUSD.toNumber()}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{
+                // @ts-ignore
+                invoice.priceUSD.toString()
+              }</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.description}</td>
             </tr>
           ))}
