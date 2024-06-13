@@ -218,7 +218,7 @@ const MessagingPage = () => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
     console.log({ amount, description });
     alert('Invoice Created');
