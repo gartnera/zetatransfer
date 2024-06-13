@@ -215,184 +215,56 @@ const MessagingPage = () => {
     }
   }
 
-  return (
-    <div className="px-4">
-      <h1 className="text-2xl font-bold leading-tight tracking-tight mt-6 mb-4">
-        Receive Payment!
-      </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-6 gap-10 items-start">
-        <div className="col-span-1 sm:col-span-2">
-          <Card className="p-4">
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                write?.()
-              }}
-            >
-              <Input
-                disabled
-                value={currentNetworkName || "Please, connect wallet"}
-              />
-              {isZeta && (
-                <Alert variant="destructive" className="text-sm">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    The protocol currently does not support sending cross-chain
-                    messages to/from ZetaChain. Please, switch to another
-                    network.
-                  </AlertDescription>
-                </Alert>
-              )}
-              <Select
-                onValueChange={(e) => setDestinationNetwork(e)}
-                disabled={isZeta}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Destination network" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {availableNetworks.map((network) => (
-                      <SelectItem key={network} value={network}>
-                        {network}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Message"
-                disabled={isZeta}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-              <div>
-                <Label>
-                  Fee
-                  {currentChain?.nativeCurrency &&
-                    ` (in ${chain?.nativeCurrency?.symbol})`}
-                  :
-                </Label>
-                <Input
-                  id="fee"
-                  placeholder="Fee"
-                  value={fee}
-                  disabled={!destinationNetwork}
-                  type="number"
-                  onChange={(e) => setFee(e.target.value)}
-                />
-              </div>
-              <Button
-                type="submit"
-                variant="outline"
-                disabled={
-                  isZeta ||
-                  isLoading ||
-                  !write ||
-                  !message ||
-                  !currentNetworkName
-                }
-              >
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="mr-2 h-4 w-4" />
-                )}
-                Send message
-              </Button>
-            </form>
-          </Card>
-        </div>
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
 
-        <div className="text-sm col-span-1 sm:col-span-3">
-          <div className="max-w-prose leading-6 space-y-2">
-            <p>
-              This is a dapp that uses ZetaChain&apos;s{" "}
-              <strong>cross-chain messaging</strong> for sending text messages
-              between smart contracts deployed on different chains. It is a
-              simple example of how to use the cross-chain messaging to send
-              arbitrary data.
-            </p>
-            <p>
-              You can learn how to build a dapp like this by following the
-              tutorial:
-            </p>
-            <Link
-              href="https://www.zetachain.com/docs/developers/cross-chain-messaging/examples/hello-world/"
-              target="_blank"
-            >
-              <Button variant="outline" className="mt-4 mb-2">
-                <BookOpen className="w-4 h-4 mr-2" />
-                Tutorial
-              </Button>
-            </Link>
-            <p>
-              The dapp on this page interacts with a smart contract built from
-              the same source code as in the tutorial. The smart contract is
-              deployed on the following networks:
-            </p>
-          </div>
-          <pre className="my-4 rounded-md bg-slate-950 p-4 w-full overflow-x-scroll">
-            <code className="text-white">
-              {JSON.stringify(contracts, null, 2)}
-            </code>
-          </pre>
-          <div className="max-w-prose leading-6 space-y-2">
-            <p>Let&apos;s try using the dapp:</p>
-          </div>{" "}
-          <ol className="mt-5 text-sm leading-6 space-y-4">
-            <li className="flex">
-              <Checkbox
-                className="mr-2 mt-1"
-                disabled
-                checked={!!destinationNetwork}
-              />
-              <span className={cn(!!destinationNetwork && "line-through")}>
-                First, select the destination network
-              </span>
-            </li>
-            {!!destinationNetwork && (
-              <li className="leading-6">
-                <Alert>
-                  You&apos;ve selected <strong>{destinationNetwork}</strong> as
-                  the destination network.
-                </Alert>
-              </li>
-            )}
-            <li className="flex">
-              <Checkbox className="mr-2 mt-1" disabled checked={!!message} />
-              <span className={cn(!!message && "line-through")}>
-                Next, write a message in the input field
-              </span>
-            </li>
-            <li className="flex">
-              <Checkbox className="mr-2 mt-1" disabled checked={completed} />
-              <span className={cn(completed && "line-through")}>
-                Finally, click Send message and confirm in your wallet
-              </span>
-            </li>
-            {completed && (
-              <li className="leading-6">
-                <Alert>
-                  Great! You&apos;ve sent a message from {currentNetworkName} to{" "}
-                  {destinationNetwork}. Once the cross-chain transaction with
-                  the message is processed you will be able to see it in the 
-                  <strong>Events</strong> tab in 
-                  <a
-                    href={explorer}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-primary underline underline-offset-4"
-                  >
-                    {extractDomain(explorer)}
-                  </a>
-                  .
-                </Alert>
-              </li>
-            )}
-          </ol>
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log({ amount, description });
+    alert('Invoice Created');
+  };
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold leading-tight tracking-tight mt-6 mb-4">
+        Receive Payment
+      </h1>
+      <p className="mb-6 text-gray-700">
+        Create an invoice for a payment. Your invoice will be stored on ZetaChain. You will receive a link to share with the payer.
+      </p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="form-group">
+          <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+            Amount (USD)
+          </label>
+          <input
+            type="number"
+            id="amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            required
+          />
         </div>
-      </div>
+        <div className="form-group">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
+          <textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Create Invoice
+        </button>
+      </form>
     </div>
   )
 }
