@@ -3,7 +3,7 @@ import { ZetaChainClient } from "@zetachain/toolkit/client"
 
 const ZetaChainContext = createContext<any>(undefined!)
 
-export const InvoiceAddr = "0x8A3F33ee4FD57B5065633d12D2e834D14BDfe667"
+export const InvoiceAddr = "0x1430CCd913e879a53A68dc9795f91a842754a773"
 
 interface ZetaChainProviderProps {
   children: ReactNode
