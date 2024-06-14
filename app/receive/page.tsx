@@ -20,23 +20,9 @@ import {
   useWaitForTransaction,
 } from "wagmi"
 
+import { InvoiceAddr } from "../ZetaChainContext"
+
 import { useEthersSigner } from "@/lib/ethers"
-import { cn } from "@/lib/utils"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { AppContext } from "@/app/index"
 
 // Spinner component using Tailwind CSS
 const Spinner = () => (
@@ -104,7 +90,7 @@ const MessagingPage = () => {
   const signer = useEthersSigner()
 
   // @ts-ignore
-  const contract = InvoiceManager__factory.connect("0xF414178A366c5f7bd8C2d0666cd34df3B245AD42", signer);
+  const contract = InvoiceManager__factory.connect(InvoiceAddr, signer);
 
   const [invoices, setInvoices] = useState<InvoiceStruct[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(true);
@@ -159,7 +145,9 @@ const MessagingPage = () => {
 
   if (chain && !isZeta) {
     return (
-      <p>You need to switch your wallet to ZetaChain to work with invoices</p>
+      <div>
+        <p>You need to switch your wallet to ZetaChain to work with invoices</p>
+      </div>
     )
   }
 
@@ -231,6 +219,7 @@ const MessagingPage = () => {
           ))}
         </tbody>
       </table>
+
 }
     </div>
   )
